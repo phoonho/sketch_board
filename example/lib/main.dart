@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:sketch_board/sketch_board.dart';
+
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() => runApp(MyApp());
 
@@ -13,6 +18,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
+  File image;
 
   @override
   void initState() {
@@ -40,15 +46,39 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  Future _cropImage(File imageFile) async {
+    File croppedFile = await ImageCropper.cropImage(
+      sourcePath: imageFile.path,
+    );
+//    var url = await homeModel.uploadImage2Oss(file: croppedFile);
+    if (croppedFile != null) {
+      image = croppedFile;
+      SketchBoard.sketchImage(sourcePath: image.path);
+      setState(() {
+      });
+    }
+  }
+
+  Future gallery() async {
+    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    await _cropImage(image);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Plugin example app'),
+          title: const Text('Sketch board demo'),
         ),
         body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+          child: image != null ? Image.file(image) : Container(),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            gallery();
+          },
+          child: Icon(Icons.camera),
         ),
       ),
     );
